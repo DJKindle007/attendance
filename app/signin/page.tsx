@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { authDisabled, signIn } from '@/auth';
+import { authDisabled, authMisconfigured, signIn } from '@/auth';
 
 export default function SignInPage() {
   if (authDisabled) {
@@ -11,6 +11,19 @@ export default function SignInPage() {
           <Link className="btn btn-primary no-underline" href="/">
             Open the admin page
           </Link>
+        </div>
+      </main>
+    );
+  }
+  if (authMisconfigured) {
+    return (
+      <main className="min-h-screen flex items-start justify-center p-8">
+        <div className="mt-20 w-full max-w-lg panel p-10">
+          <h1 className="text-2xl font-bold">Sign-in is not set up yet</h1>
+          <p className="mt-3 text-sm text-muted">Google sign-in needs AUTH_SECRET, AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET in the environment (docs/SETUP.md, step 4).</p>
+          <p className="mt-3 text-sm text-muted">
+            To preview the app without sign-in, set <code>AUTH_DISABLED=true</code> for this environment in Vercel (Settings → Environment Variables, Production) and redeploy. Environment variables only take effect on the next deployment.
+          </p>
         </div>
       </main>
     );

@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
-import { auth, authDisabled } from '@/auth';
+import { auth, authDisabled, authMisconfigured } from '@/auth';
 
 // Admin pages and /api/admin/* need a signed-in kindleeducation.org account.
 // The kiosk (/kiosk, /api/kiosk/*) uses a device cookie and the job endpoints
 // (/api/jobs/*) use a bearer secret, so they are excluded here and check
 // their own credentials. (Next 16 calls this file proxy.ts; it is the old middleware.)
-const proxy = authDisabled ? () => NextResponse.next() : auth;
+const proxy = authDisabled
+  ? () => NextResponse.next()
+  : authMisconfigured
+    ? (request: Request) => NextResponse.redirect(new URL('/signin', request.url))
+    : auth;
 
 export default proxy;
 

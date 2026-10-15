@@ -10,7 +10,10 @@ import Google from 'next-auth/providers/google';
 
 const allowedDomain = (process.env.ALLOWED_EMAIL_DOMAIN ?? 'kindleeducation.org').toLowerCase();
 
-export const authDisabled = process.env.AUTH_DISABLED === 'true';
+export const authDisabled = /^(true|1|yes|on)$/i.test((process.env.AUTH_DISABLED ?? '').trim());
+
+/** Sign-in is on but the OAuth client or secret is missing: every page explains that instead of next-auth's generic error page. */
+export const authMisconfigured = !authDisabled && !(process.env.AUTH_SECRET && process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
 
 type NA = ReturnType<typeof NextAuth>;
 
