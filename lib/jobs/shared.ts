@@ -72,6 +72,8 @@ export async function opsSlackId(): Promise<string | null> {
 }
 
 export function teacherDisplayName(email: string): string {
+  const known = schoolConfig().staffNames[email.toLowerCase()];
+  if (known) return known;
   const local = email.split('@')[0];
   return local
     .split(/[._-]+/)

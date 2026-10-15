@@ -18,6 +18,9 @@ import { parseGuardianCsv } from '../lib/guardian-csv';
 const cfg = SchoolConfigSchema.parse(homeroomsJson);
 assert.ok(Object.keys(cfg.homerooms).length >= 9, 'config lists the middle school homerooms');
 assert.deepEqual(Object.keys(cfg.gradeChannels).sort(), ['6th', '7th', '8th']);
+for (const [h, room] of Object.entries(cfg.homerooms)) assert.equal(cfg.gradeChannels[room.grade] !== undefined, true, `${h} has a grade channel`);
+for (const email of Object.values(cfg.homerooms).flatMap((r) => r.teachers)) assert.ok(cfg.staffNames[email], `${email} has a display name`);
+assert.ok(cfg.staffNames[cfg.opsCoordinatorEmail], 'ops coordinator has a display name');
 
 // ---- school days and time zones ----
 assert.equal(isSchoolDay('2026-10-15'), true, 'a Thursday in October');

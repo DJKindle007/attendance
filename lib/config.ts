@@ -21,6 +21,8 @@ export const SchoolConfigSchema = z.object({
   opsCoordinatorEmail: z.string().email(),
   gradeChannels: z.record(z.string(), z.string().regex(/^[CG][A-Z0-9]+$/)),
   homerooms: z.record(z.string(), HomeroomSchema),
+  /** Display names for staff emails, used in greetings. Anyone missing is named from the email's local part. */
+  staffNames: z.record(z.string().email(), z.string().min(1)).default({}),
 });
 
 export type SchoolConfig = z.infer<typeof SchoolConfigSchema>;
