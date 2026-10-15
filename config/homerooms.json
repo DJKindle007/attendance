@@ -1,0 +1,66 @@
+{
+  "schoolName": "Kindle Education Middle School",
+  "attendanceDeadline": "9:10 AM",
+  "opsCoordinatorEmail": "ops-coordinator@kindleeducation.org",
+  "gradeChannels": {
+    "6th": "C0BUBNS4YTV",
+    "7th": "C0BUBNHQEM9",
+    "8th": "C0BUKSZ72Q1"
+  },
+  "homerooms": {
+    "6A": {
+      "grade": "6th",
+      "teachers": [
+        "teacher-6a@kindleeducation.org"
+      ]
+    },
+    "6B": {
+      "grade": "6th",
+      "teachers": [
+        "teacher-6b@kindleeducation.org"
+      ]
+    },
+    "6C": {
+      "grade": "6th",
+      "teachers": [
+        "teacher-6c@kindleeducation.org"
+      ]
+    },
+    "7A": {
+      "grade": "7th",
+      "teachers": [
+        "teacher-7a@kindleeducation.org"
+      ]
+    },
+    "7B": {
+      "grade": "7th",
+      "teachers": [
+        "teacher-7b@kindleeducation.org"
+      ]
+    },
+    "7C": {
+      "grade": "7th",
+      "teachers": [
+        "teacher-7c@kindleeducation.org"
+      ]
+    },
+    "8A": {
+      "grade": "8th",
+      "teachers": [
+        "teacher-8a@kindleeducation.org"
+      ]
+    },
+    "8B": {
+      "grade": "8th",
+      "teachers": [
+        "teacher-8b@kindleeducation.org"
+      ]
+    },
+    "8C": {
+      "grade": "8th",
+      "teachers": [
+        "teacher-8c@kindleeducation.org"
+      ]
+    }
+  }
+}
