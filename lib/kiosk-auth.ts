@@ -4,6 +4,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { and, eq, isNull } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 import { db, schema } from '@/db/client';
+import { isDbConfigured } from './db-guard';
 
 export const KIOSK_COOKIE = 'kiosk_token';
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
@@ -17,7 +18,7 @@ export function newToken(): string {
 }
 
 export async function deviceForToken(token: string | undefined | null) {
-  if (!token) return null;
+  if (!token || !isDbConfigured()) return null;
   const rows = await db()
     .select()
     .from(schema.kioskDevices)

@@ -1,8 +1,9 @@
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
-import { currentAdminEmail, signOut } from '@/auth';
+import { authDisabled, currentAdminEmail, signOut } from '@/auth';
 import { AdminCheckin, GuardianUpload, PairKioskButton, RevokeKioskButton, RunJobButton, UndoButton } from '@/components/AdminActions';
 import { db, schema } from '@/db/client';
 import { env, isDryRun, schoolConfig } from '@/lib/config';
+import { isDbConfigured } from '@/lib/db-guard';
 import { JOBS } from '@/lib/jobs';
 import { formatLongDate, formatTime, isSchoolDay, todayKey } from '@/lib/time';
 
@@ -14,6 +15,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
   const cfg = schoolConfig();
   const email = await currentAdminEmail();
+  if (!isDbConfigured()) return <SetupPage cfg={cfg} email={email} />;
 
   const [homerooms, checkinRows, notices, runs, devices, staffRows, rosterCount, noGuardian] = await Promise.all([
     db().select().from(schema.homeroomStatus).where(eq(schema.homeroomStatus.runDate, date)).orderBy(schema.homeroomStatus.homeroom),
@@ -55,20 +57,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <div className="text-sm text-muted">{cfg.schoolName}</div>
           </div>
         </div>
-        <div className="text-sm text-muted flex items-center gap-3">
-          {dryRun && <span className="chip chip-warn">DRY RUN: nothing is sent</span>}
-          {email && <span>{email}</span>}
-          <form
-            action={async () => {
-              'use server';
-              await signOut({ redirectTo: '/signin' });
-            }}
-          >
-            <button className="underline" type="submit">
-              Sign out
-            </button>
-          </form>
-        </div>
+        <HeaderRight dryRun={dryRun} email={email} />
       </header>
 
       <section className="mb-6 flex flex-wrap items-center gap-3">
@@ -318,5 +307,115 @@ function Panel({ title, children, footer, action }: { title: string; children: R
       {children}
       {footer && <div className="text-xs text-muted px-4 py-2 border-t border-line">{footer}</div>}
     </section>
+  );
+}
+
+function HeaderRight({ dryRun, email }: { dryRun: boolean; email: string | null }) {
+  return (
+    <div className="text-sm text-muted flex flex-wrap items-center gap-3">
+      {authDisabled && (
+        <span className="chip chip-bad" title="Set AUTH_DISABLED to false (and configure Google sign-in) before any student data is loaded.">
+          SIGN-IN IS OFF: preview only
+        </span>
+      )}
+      {dryRun && <span className="chip chip-warn">DRY RUN: nothing is sent</span>}
+      {email && !authDisabled && <span>{email}</span>}
+      {!authDisabled && (
+        <form
+          action={async () => {
+            'use server';
+            await signOut({ redirectTo: '/signin' });
+          }}
+        >
+          <button className="underline" type="submit">
+            Sign out
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+/** What the admin page shows before a database is connected: the setup checklist and the job list. */
+function SetupPage({ cfg, email }: { cfg: ReturnType<typeof schoolConfig>; email: string | null }) {
+  const steps: { label: string; done: boolean; hint: string }[] = [
+    { label: 'Database (Neon)', done: false, hint: 'Set DATABASE_URL, then run the migration (npm run db:migrate).' },
+    { label: 'DeansList API key', done: Boolean(process.env.DEANSLIST_API_KEY), hint: 'DEANSLIST_SUBDOMAIN and DEANSLIST_API_KEY.' },
+    { label: 'Slack bot', done: Boolean(process.env.SLACK_BOT_TOKEN), hint: 'SLACK_BOT_TOKEN; invite the bot to the three grade channels.' },
+    { label: 'Gmail service account', done: Boolean(process.env.GOOGLE_SA_JSON_B64 && process.env.MAIL_FROM), hint: 'GOOGLE_SA_JSON_B64 and MAIL_FROM, with domain-wide delegation.' },
+    { label: 'Google sign-in', done: !authDisabled && Boolean(process.env.AUTH_GOOGLE_ID), hint: 'AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET, AUTH_SECRET; set AUTH_DISABLED to false.' },
+    { label: 'Scheduled jobs', done: Boolean(process.env.JOBS_SECRET), hint: 'JOBS_SECRET, then the five Cloud Scheduler jobs (docs/SETUP.md).' },
+  ];
+  return (
+    <main className="min-h-screen p-6 sm:p-10 max-w-4xl mx-auto">
+      <header className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <img src="https://images.squarespace-cdn.com/content/v1/632fd47c6695d574095f511f/947a9b64-46c2-4575-b420-0c4feb5b2459/LogoOrange.png" alt="" width={36} height={36} />
+          <div>
+            <h1 className="text-xl font-bold leading-tight">Attendance</h1>
+            <div className="text-sm text-muted">{cfg.schoolName}</div>
+          </div>
+        </div>
+        <HeaderRight dryRun={isDryRun()} email={email} />
+      </header>
+
+      <Panel title="Not connected yet" footer="Once DATABASE_URL is set this page shows today's homerooms, late check-ins, family emails and the job log.">
+        <ul className="px-4 py-3 space-y-2 text-sm">
+          {steps.map((s) => (
+            <li key={s.label} className="flex items-start gap-3">
+              <span className={`chip ${s.done ? 'chip-ok' : 'chip-none'}`}>{s.done ? 'set' : 'to do'}</span>
+              <span>
+                <strong>{s.label}.</strong> <span className="text-muted">{s.hint}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </Panel>
+
+      <Panel title="What runs each school day" footer="Times are set in Cloud Scheduler (America/New_York) and can be moved after the DeansList discovery runs.">
+        <table className="data">
+          <thead>
+            <tr>
+              <th>Job</th>
+              <th>Schedule</th>
+              <th>What it does</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(JOBS).map(([jobName, j]) => (
+              <tr key={jobName}>
+                <td className="font-mono text-xs">{jobName}</td>
+                <td>{j.schedule}</td>
+                <td>{j.description}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Panel>
+
+      <Panel title="Homerooms in config" footer="From config/homerooms.json. Teachers are reminded on Slack at 9:10 and emailed at 9:20 when their homeroom is still missing.">
+        <table className="data">
+          <thead>
+            <tr>
+              <th>Homeroom</th>
+              <th>Grade</th>
+              <th>Teachers</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(cfg.homerooms).map(([h, room]) => (
+              <tr key={h}>
+                <td className="font-semibold">{h}</td>
+                <td>{room.grade}</td>
+                <td>{room.teachers.map((t) => cfg.staffNames[t] ?? t).join(', ')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Panel>
+      <p className="text-sm text-muted">
+        The kiosk lives at <a href="/kiosk">/kiosk</a>; it needs the database before a device can be paired.
+      </p>
+    </main>
   );
 }

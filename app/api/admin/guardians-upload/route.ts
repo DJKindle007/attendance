@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { dbNotConfiguredResponse } from '@/lib/db-guard';
 import { currentAdminEmail } from '@/auth';
 import { db, schema } from '@/db/client';
 import { parseGuardianCsv } from '@/lib/guardian-csv';
@@ -7,6 +8,8 @@ export const dynamic = 'force-dynamic';
 
 /** POST multipart/form-data with field "file": upserts guardian_contacts. An uploaded row wins over DeansList for that student. */
 export async function POST(request: NextRequest) {
+  const noDb = dbNotConfiguredResponse();
+  if (noDb) return noDb;
   const email = await currentAdminEmail();
   if (!email) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const form = await request.formData().catch(() => null);

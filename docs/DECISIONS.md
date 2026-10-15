@@ -26,6 +26,11 @@ The durable record of product and data choices. Update it whenever a decision la
 - **DRY_RUN defaults to true.** A fresh deploy sends nothing until someone sets it to false. In DRY_RUN the database claims are still recorded (marked `dry_run` on the run), so a dry morning reads exactly like a live one.
 - **No transactions.** Every mutation is one statement, which is what the Neon HTTP driver supports; locally a plain Postgres is used through node-postgres when `DATABASE_URL` points at localhost or `DB_DRIVER=pg`.
 
+## Preview mode (2026-10-15)
+
+- `AUTH_DISABLED=true` now turns sign-in off everywhere, including Vercel, so the app can be previewed before the Google OAuth client exists. While it is on, `auth.ts` does not construct NextAuth at all (no `AUTH_SECRET` needed), the admin page shows a red "SIGN-IN IS OFF" banner and hides Sign out, and the acting admin is recorded as `preview@kindleeducation.org`. It is a preview switch, not a mode to run with data: the setup guide says to turn it off before the first roster refresh.
+- Without `DATABASE_URL`, pages render instead of crashing: the admin page shows the setup checklist, the job list and the configured homerooms; the kiosk shows "not paired"; every API route answers 503 `database not configured`.
+
 ## Open items
 
 1. Phase 0 answers (see README), then the final scheduler times and `HOMEROOM_SUBMITTED_MIN_RATIO`.

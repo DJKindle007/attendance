@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { dbNotConfiguredResponse } from '@/lib/db-guard';
 import { checkInStudent, findStudent } from '@/lib/checkin';
 import { currentKioskDevice } from '@/lib/kiosk-auth';
 
@@ -6,6 +7,8 @@ export const dynamic = 'force-dynamic';
 
 /** POST /api/kiosk/checkin { dlStudentId } */
 export async function POST(request: NextRequest) {
+  const noDb = dbNotConfiguredResponse();
+  if (noDb) return noDb;
   if (!(await currentKioskDevice())) return NextResponse.json({ error: 'kiosk not paired' }, { status: 401 });
   let body: { dlStudentId?: string } = {};
   try {

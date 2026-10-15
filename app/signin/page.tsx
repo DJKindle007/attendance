@@ -1,6 +1,20 @@
-import { signIn } from '@/auth';
+import Link from 'next/link';
+import { authDisabled, signIn } from '@/auth';
 
 export default function SignInPage() {
+  if (authDisabled) {
+    return (
+      <main className="min-h-screen flex items-start justify-center p-8">
+        <div className="mt-20 w-full max-w-md panel p-10 text-center">
+          <h1 className="text-2xl font-bold">Kindle Attendance</h1>
+          <p className="mt-2 mb-6 text-sm text-muted">Sign-in is turned off (AUTH_DISABLED=true), so there is nothing to sign in to.</p>
+          <Link className="btn btn-primary no-underline" href="/">
+            Open the admin page
+          </Link>
+        </div>
+      </main>
+    );
+  }
   return (
     <main className="min-h-screen flex items-start justify-center p-8">
       <div className="mt-20 w-full max-w-md panel p-10 text-center">

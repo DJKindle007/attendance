@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { dbNotConfiguredResponse } from '@/lib/db-guard';
 import { timingSafeEqual } from 'node:crypto';
 import { JOBS } from '@/lib/jobs';
 import { runJob } from '@/lib/jobs/run';
@@ -23,6 +24,8 @@ function authorized(request: NextRequest): boolean {
  * 503 when DeansList or the database is unreachable, so Cloud Scheduler retries only then.
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ job: string }> }) {
+  const noDb = dbNotConfiguredResponse();
+  if (noDb) return noDb;
   if (!authorized(request)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const { job: jobName } = await params;
   const job = JOBS[jobName];

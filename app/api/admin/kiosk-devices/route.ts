@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { dbNotConfiguredResponse } from '@/lib/db-guard';
 import { eq } from 'drizzle-orm';
 import { currentAdminEmail } from '@/auth';
 import { db, schema } from '@/db/client';
@@ -8,6 +9,8 @@ export const dynamic = 'force-dynamic';
 
 /** POST { label } : creates a kiosk pairing link (shown once). DELETE { id } : revokes a device. */
 export async function POST(request: NextRequest) {
+  const noDb = dbNotConfiguredResponse();
+  if (noDb) return noDb;
   const email = await currentAdminEmail();
   if (!email) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const body = (await request.json().catch(() => ({}))) as { label?: string };
@@ -19,6 +22,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const noDb = dbNotConfiguredResponse();
+  if (noDb) return noDb;
   const email = await currentAdminEmail();
   if (!email) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const body = (await request.json().catch(() => ({}))) as { id?: number };

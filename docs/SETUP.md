@@ -2,6 +2,10 @@
 
 Everything below is done once. Order matters only where noted.
 
+## 0. Previewing before anything is set up
+
+Deploy to Vercel with just two environment variables: `AUTH_DISABLED=true` and `DRY_RUN=true`. The admin page then opens without sign-in and shows a setup checklist instead of data; the kiosk shows its "not paired" screen. A red **SIGN-IN IS OFF** banner stays on the admin page until `AUTH_DISABLED` is removed. Do not load the roster (step 9) while it is on: anyone with the URL could read student names.
+
 ## 1. Neon (database)
 
 1. Create a project at neon.tech; copy the pooled connection string.
