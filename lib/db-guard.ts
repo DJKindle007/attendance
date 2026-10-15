@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 export function isDbConfigured(): boolean {
-  return Boolean(process.env.DATABASE_URL);
+  return Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL.trim());
 }
 
 /** A 503 for API routes when there is no database yet (preview deploys), or null when all is well. */

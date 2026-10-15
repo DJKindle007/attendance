@@ -61,7 +61,8 @@ export type Env = z.infer<typeof EnvSchema>;
 let cachedEnv: Env | null = null;
 
 export function env(): Env {
-  if (!cachedEnv) cachedEnv = EnvSchema.parse(process.env);
+  // Vercel and shells can leave a variable set to an empty string; treat that as unset.
+  if (!cachedEnv) cachedEnv = EnvSchema.parse(Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== '')));
   return cachedEnv;
 }
 
