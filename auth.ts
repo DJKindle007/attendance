@@ -10,10 +10,20 @@ import Google from 'next-auth/providers/google';
 
 const allowedDomain = (process.env.ALLOWED_EMAIL_DOMAIN ?? 'kindleeducation.org').toLowerCase();
 
-export const authDisabled = /^(true|1|yes|on)$/i.test((process.env.AUTH_DISABLED ?? '').trim());
+const explicitlyDisabled = /^(true|1|yes|on)$/i.test((process.env.AUTH_DISABLED ?? '').trim());
+const oauthConfigured = Boolean(process.env.AUTH_SECRET && process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
+const dbConfigured = Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL.trim());
+
+/**
+ * Sign-in is off when asked for explicitly, or when there is nothing to protect
+ * yet: no database means no student data, so a bare deploy previews without
+ * any setup. As soon as DATABASE_URL is set, sign-in is required unless
+ * AUTH_DISABLED=true is set on purpose.
+ */
+export const authDisabled = explicitlyDisabled || (!dbConfigured && !oauthConfigured);
 
 /** Sign-in is on but the OAuth client or secret is missing: every page explains that instead of next-auth's generic error page. */
-export const authMisconfigured = !authDisabled && !(process.env.AUTH_SECRET && process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
+export const authMisconfigured = !authDisabled && !oauthConfigured;
 
 type NA = ReturnType<typeof NextAuth>;
 
